@@ -10,7 +10,8 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
     uint256 public mintCount;
     uint256 public burnCount;
     uint256 public maxSupply;
-    uint256 public basePrice = 1000000000000000000; //1 ETH
+    uint256 public basePriceTlos = 1000000000000000000; //1 ETH
+    uint256 public basePriceTqrl = 10000000000000000000; //10 ETH
     string public baseURI;
     uint256 public freeMints; //token id < freeMints are free to mint
 
@@ -23,7 +24,6 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
     constructor(string memory name_, string memory symbol_, uint256 maxSupply_) ERC721(name_, symbol_) {
         maxSupply = maxSupply_;
     }
-
     /// @dev toggles paused state
     function togglePaused() public onlyOwner {
         if (paused()) {
@@ -52,7 +52,11 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
     function mint(bytes memory data) public payable whenNotPaused {
         if (mintCount > freeMints) {
             //validate
-            require(msg.value == basePrice, "Must send exact value to mint");
+            if(data.ticker == "TSQRL"){
+                require(msg.value == basePriceTsqrl, "Must send exact TSQRL value to mint");
+            } else {
+               require(msg.value == basePriceTlos, "Must send exact TLOS value to mint");
+            }
         }
 
         //send eth to owner address
@@ -71,15 +75,16 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
         _burn(tokenId);
     }
 
-    /// @dev sets a new basePrice value
+    /// @dev sets a new basePriceTsqrl value
     /// @param newBasePrice value of new basePrice
-    function setBasePrice(uint256 newBasePrice) public onlyOwner {
-        basePrice = newBasePrice;
+    function setBasePriceTsqrl(uint256 newBasePrice) public onlyOwner {
+        basePriceTsqrl = newBasePrice;
     }
 
-    /// @dev sets a new free mints count
-    function setFreeMints(uint256 newFreeMints) public onlyOwner onlyPreMint {
-        freeMints = newFreeMints;
+    /// @dev sets a new basePriceTlos value
+    /// @param newBasePrice value of new basePrice
+    function setBasePriceTlos(uint256 newBasePrice) public onlyOwner {
+        basePriceTlos = newBasePrice;
     }
 
     /// @dev sets a new baseURI for contract
