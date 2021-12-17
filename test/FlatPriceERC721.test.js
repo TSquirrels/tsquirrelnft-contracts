@@ -10,7 +10,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
     const maxSupply = 10;
 
     let basePrice = `${1*1e18}`; //1 ETH
-    let freeMints = 1;
 
     before(async () => {
         //initialize contract array
@@ -62,34 +61,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         assert.equal(q1, tokenSymbol);
     });
 
-    it("Can set and get free mint count", async () => {
-        //send mint transaction
-        const t1 = await this.contracts[0].setFreeMints(freeMints, {from: deployer});
-
-        //query contract
-        const q1 = await this.contracts[0].freeMints();
-
-        //check query
-        assert.equal(q1, freeMints);
-    });
-
-    it("Can mint free token", async () => {
-        //send mint transaction
-        const t1 = await this.contracts[0].mint({from: userA});
-
-        //check event emitted
-        expectEvent(t1, 'Transfer', {
-            from: constants.ZERO_ADDRESS,
-            to: userA,
-            tokenId: "0"
-        });
-
-        //query post state
-        const q1 = await this.contracts[0].mintCount();
-
-        //check post state
-        assert.equal(q1.toNumber(), 1);
-    });
 
     it("Can mint token", async () => {
         //query pre state
@@ -326,15 +297,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
             this.contracts[0].mint({from: userA, value: `${1.1*1e18}`}),
             "Pausable: paused",
         );
-
-        // let hexData = await web3.utils.utf8ToHex("testing...");
-        // let bytesData = await web3.utils.hexToBytes(userA);
-
-        //attempt to mint while paused
-        // await expectRevert(
-        //     this.contracts[0].mint(bytesData, {from: userA, value: `${1.1*1e18}`}),
-        //     "Pausable: paused",
-        // );
     });
 
     it("Can unpause contract (Pausable)", async () => {
@@ -351,30 +313,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
 
         //check queries
         assert.equal(q1, false);
-    });
-
-    it("Can burn token (ERC721Burnable)", async () => {
-        //send burn transaction
-        const t1 = await this.contracts[0].burn(0, {from: userB});
-
-        //check event emitted
-        expectEvent(t1, 'Transfer', {
-            from: userB,
-            to: constants.ZERO_ADDRESS,
-            tokenId: "0"
-        });
-
-        //query state
-        const q1 = await this.contracts[0].balanceOf(userA);
-        const q2 = await this.contracts[0].balanceOf(userB);
-        const q3 = await this.contracts[0].balanceOf(userC);
-        const q4 = await this.contracts[0].burnCount();
-
-        //check queries
-        assert.equal(q1.toNumber(), 1);
-        assert.equal(q2.toNumber(), 0);
-        assert.equal(q3.toNumber(), 0);
-        assert.equal(q4.toNumber(), 1);
     });
 
 });
