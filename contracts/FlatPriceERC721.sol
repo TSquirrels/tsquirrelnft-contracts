@@ -10,7 +10,6 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
     uint256 public maxSupply;
     uint256 public basePrice = 30000000000000000000; // 30 TLOS
     string public baseURI;
-    bool public isSaleActive = true;
 
     /// @dev reverts if any tokens have been minted
     modifier onlyPreMint() {
