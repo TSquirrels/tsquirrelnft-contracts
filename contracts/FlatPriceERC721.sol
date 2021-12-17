@@ -67,7 +67,7 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
     /// @param from address token is moving from
     /// @param to address token is moving to
     /// @param tokenId id of token being moved
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+    function _beforeTokenTransfer(address from) internal override {
         //if minting
         if (from == address(0x0)) {
             mintCount += 1;
