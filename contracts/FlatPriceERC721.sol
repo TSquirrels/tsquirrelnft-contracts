@@ -31,11 +31,11 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
         }
     }
 
-    /// @dev mints the next tokenId to msg.sender if min value is paid
+    /// @dev mints the next tokenId to msg.sender if min value is paid & mintCount does not exceed supply
     function mint() public payable whenNotPaused {
         //validate
         require(msg.value == basePrice, "Must send exact token value to mint");
-        require(mintCount <= maxSupply, "Max supply has been reached, no more mints are possible");
+        require(mintCount < maxSupply, "Max supply has been reached, no more mints are possible");
  
         //send eth to owner address
         (bool sent, bytes memory data) = owner().call{value: msg.value}("");
