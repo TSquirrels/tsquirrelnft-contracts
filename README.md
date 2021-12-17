@@ -1,10 +1,9 @@
-# Ethereum Contract Template
-A repo of template ethereum contracts.
+# TSquirrel NFT Contracts
+A repo of TSquirrel NFT ethereum contracts.
 
 | Contract | Description |
 | ----------- | ----------- |
-| BuyableERC721 | NFT contract with buyable mints. |
-| CustomERC721 | Custom generic ERC721 implementation. |
+| FlatPriceERC721 | NFT contract with buyable mints at a fixed native EVM currency price. |
 
 ## Build
 
