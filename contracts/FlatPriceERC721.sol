@@ -3,8 +3,9 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
-contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
+contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
 
     uint256 public mintCount;
     uint256 public maxSupply;
@@ -31,19 +32,19 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
         }
     }
 
-    /// @dev mints the next tokenId to msg.sender if min value is paid & mintCount does not exceed supply
+    /// @dev mints the next tokenId to msg.sender if min value is paid
     function mint() public payable whenNotPaused {
         //validate
         require(msg.value == basePrice, "Must send exact token value to mint");
-        require(mintCount < maxSupply, "Max supply has been reached, no more mints are possible");
- 
+        require(mintCount <= maxSupply, "Max supply has been reached, no more mints are possible");
+
         //send eth to owner address
         (bool sent, bytes memory data) = owner().call{value: msg.value}("");
         require(sent, "Failed to send to owner address");
 
         _safeMint(msg.sender, mintCount);
     }
-    
+
     /// @dev sets a new basePrice value
     /// @param newBasePrice value of new basePrice
     function setBasePrice(uint256 newBasePrice) public onlyOwner {
@@ -62,16 +63,22 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721 {
         return baseURI;
     }
 
-    /// @dev overridden ERC721 function hook that is called before every token transfer, including
+    /// @dev overridden ERC721, ERC721Enumerable function hook that is called before every token transfer, including
     /// minting and burning events.
     /// @param from address token is moving from
     /// @param to address token is moving to
     /// @param tokenId id of token being moved
-    function _beforeTokenTransfer(address from) internal override {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC721, ERC721Enumerable) {
         //if minting
         if (from == address(0x0)) {
             mintCount += 1;
         }
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+    /// @dev overridden ERC721, ERC721Enumerable function
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+       return super.supportsInterface(interfaceId);
     }
 
     /// @dev function to receive Ether. msg.data must be empty
