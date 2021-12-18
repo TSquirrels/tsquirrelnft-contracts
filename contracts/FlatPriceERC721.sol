@@ -1,15 +1,15 @@
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 
-contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
+contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721EnumerableUpgradeable {
 
     uint256 public mintCount;
     uint256 public maxSupply;
-    uint256 public basePrice = 30000000000000000000; // 30 TLOS
+    uint256 public mintPrice = 30000000000000000000; // 30 TLOS
     string public baseURI;
 
     /// @dev reverts if any tokens have been minted
@@ -18,9 +18,14 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
         _;
     }
 
-    constructor(string memory name_, string memory symbol_, uint256 maxSupply_) ERC721(name_, symbol_) {
+    /// @dev constructor replacement for proxy call
+    /// @param name_ new name of token
+    /// @param symbol_ symbol of token
+    /// @param maxSupply_ max supply of token
+    function initialize(string memory name_, string memory symbol_, uint256 maxSupply_) initializer public {
         maxSupply = maxSupply_;
         _pause();
+        __ERC721_init(_name, _symbol);
     }
 
     /// @dev toggles paused state
@@ -35,20 +40,20 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
     /// @dev mints the next tokenId to msg.sender if min value is paid
     function mint() public payable whenNotPaused {
         //validate
-        require(msg.value == basePrice, "Must send exact token value to mint");
-        require(mintCount <= maxSupply, "Max supply has been reached, no more mints are possible");
+        require(msg.value == mintPrice, "Must send exact token value to mint");
+        require(mintCount < maxSupply, "Max supply has been reached, no more mints are possible");
 
         //send eth to owner address
         (bool sent, bytes memory data) = owner().call{value: msg.value}("");
         require(sent, "Failed to send to owner address");
 
-        _safeMint(msg.sender, mintCount);
+        _safeMint(msg.sender, mintCount);   
     }
 
-    /// @dev sets a new basePrice value
-    /// @param newBasePrice value of new basePrice
-    function setBasePrice(uint256 newBasePrice) public onlyOwner {
-        basePrice = newBasePrice;
+    /// @dev sets a new mintPrice value
+    /// @param newMintPrice value of new mintPrice
+    function setMintPrice(uint256 newMintPrice) public onlyOwner {
+        mintPrice = newMintPrice;
     }
 
     /// @dev sets a new baseURI for contract
@@ -63,12 +68,12 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
         return baseURI;
     }
 
-    /// @dev overridden ERC721, ERC721Enumerable function hook that is called before every token transfer, including
+    /// @dev overridden ERC721Enumerable function hook that is called before every token transfer, including
     /// minting and burning events.
     /// @param from address token is moving from
     /// @param to address token is moving to
     /// @param tokenId id of token being moved
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC721, ERC721Enumerable) {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
         //if minting
         if (from == address(0x0)) {
             mintCount += 1;
@@ -77,7 +82,7 @@ contract FlatPriceERC721 is Ownable, Pausable, ERC721Enumerable {
     }
 
     /// @dev overridden ERC721, ERC721Enumerable function
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
        return super.supportsInterface(interfaceId);
     }
 
