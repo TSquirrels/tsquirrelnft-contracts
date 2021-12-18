@@ -87,7 +87,7 @@ contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721Enume
     }
 
     /// @dev returns mintPrice for set mintPrice tests
-    function togglePaused() public onlyOwner {
+    function mintPrice() public onlyOwner {
         return mintPrice;
     }
 
