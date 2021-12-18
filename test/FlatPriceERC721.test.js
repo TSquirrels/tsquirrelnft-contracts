@@ -9,7 +9,7 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
     const baseURI = "https://some.public.api/endpoint/";
     const maxSupply = 10;
 
-    let basePrice = `${1*1e18}`; //1 ETH
+    let mintPrice = `${25*1e18}`; // 25 TLOS
 
     before(async () => {
         //initialize contract array
@@ -132,6 +132,17 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
 
         //check query
         assert.equal(q1, userA);
+    });
+
+    it("Can set mint price", async () => {
+        //send setMintPrice transaction
+        const t1 = await this.contracts[0].setMintPrice(mintPrice, {from: deployer});
+
+        //query new base URI
+        const q1 = await this.contracts[0].mintPrice();
+
+        //check query
+        assert.equal(q1, mintPrice);
     });
 
     it("Can set base URI", async () => {
