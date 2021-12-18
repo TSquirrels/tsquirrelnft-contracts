@@ -86,6 +86,11 @@ contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721Enume
        return super.supportsInterface(interfaceId);
     }
 
+    /// @dev returns mintPrice for set mintPrice tests
+    function togglePaused() public onlyOwner {
+        return mintPrice;
+    }
+
     /// @dev function to receive Ether. msg.data must be empty
     // receive() external payable {}
 
