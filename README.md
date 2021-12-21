@@ -3,7 +3,7 @@ A repo of TSquirrel NFT ethereum contracts.
 
 | Contract | Description |
 | ----------- | ----------- |
-| FlatPriceERC721 | Enumerable NFT contract with buyable mints at a fixed native EVM currency price. |
+| TSquirrelNFT | Enumerable ERC721 NFT contract with buyable mints at a fixed native EVM currency price. |
 
 ## Build
 
