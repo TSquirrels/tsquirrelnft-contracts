@@ -1,15 +1,15 @@
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 
-contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721EnumerableUpgradeable {
+contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721EnumerableUpgradeable {
 
     uint256 public mintCount;
     uint256 public maxSupply;
-    uint256 public mintPrice = 30000000000000000000; // 30 TLOS
+    uint256 public mintPrice; // 30 TLOS
     string public baseURI;
 
     /// @dev reverts if any tokens have been minted
@@ -21,11 +21,15 @@ contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721Enume
     /// @dev constructor replacement for proxy call
     /// @param name_ new name of token
     /// @param symbol_ symbol of token
+    /// @param mintPrice_ mint price of token
     /// @param maxSupply_ max supply of token
-    function initialize(string memory name_, string memory symbol_, uint256 maxSupply_) initializer public {
+    function initialize(string memory name_, string memory symbol_, uint256 mintPrice_, uint256 maxSupply_) initializer public {
+        __ERC721_init(name_, symbol_);
+        __ERC721Enumerable_init();
+        __Ownable_init();
         maxSupply = maxSupply_;
+        mintPrice = mintPrice_;
         _pause();
-        __ERC721_init(_name, _symbol);
     }
 
     /// @dev toggles paused state
@@ -40,7 +44,7 @@ contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721Enume
     /// @dev mints the next tokenId to msg.sender if min value is paid
     function mint() public payable whenNotPaused {
         //validate
-        require(msg.value == mintPrice, "Must send exact token value to mint");
+        require(msg.value == mintPrice, "Must send exact value to mint");
         require(mintCount < maxSupply, "Max supply has been reached, no more mints are possible");
 
         //send eth to owner address
@@ -84,11 +88,6 @@ contract FlatPriceERC721 is OwnableUpgradeable, PausableUpgradeable, ERC721Enume
     /// @dev overridden ERC721, ERC721Enumerable function
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
        return super.supportsInterface(interfaceId);
-    }
-
-    /// @dev returns mintPrice for set mintPrice tests
-    function mintPrice() public onlyOwner {
-        return mintPrice;
     }
 
     /// @dev function to receive Ether. msg.data must be empty
