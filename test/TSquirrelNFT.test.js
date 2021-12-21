@@ -1,24 +1,25 @@
 const { BN, constants, expectEvent, expectRevert, balance } = require("@openzeppelin/test-helpers");
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
-const FlatPriceERC721 = artifacts.require("FlatPriceERC721");
 
-contract("FlatPriceERC721 Contract Tests", async accounts => {
+const TSquirrelNFT = artifacts.require("TSquirrelNFT");
+const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+
+contract("TSquirrelNFT Contract Tests", async accounts => {
     const [deployer, userA, userB, userC] = accounts;
     const tokenName = "Flat Tokens";
     const tokenSymbol = "FLAT";
     const baseURI = "https://some.public.api/endpoint/";
     const maxSupply = 10;
 
-    let mintPrice = `${25*1e18}`; // 25 TLOS
+    let mintPrice = `${0.1*1e18}`;
 
     before(async () => {
         //initialize contract array
         this.contracts = [];
     });
-
     it("Can deploy contract", async () => {
         //deploy contract
-        this.contracts[0] = await FlatPriceERC721.new(tokenName, tokenSymbol, maxSupply, {from: deployer});
+        this.contracts[0] = await deployProxy(TSquirrelNFT, [tokenName, tokenSymbol, `${25*1e18}`, maxSupply]);
     });
 
     it("Can get max supply", async () => {
@@ -34,7 +35,7 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         const q1 = await this.contracts[0].paused();
 
         //check query
-        assert.equal(q1, false);
+        assert.equal(q1, true);
     });
 
     it("Can get contract owner (Ownable)", async () => {
@@ -48,7 +49,7 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
     it("Can get token name (IERC721Metadata)", async () => {
         //query contract
         const q1 = await this.contracts[0].name();
-        
+
         //check query
         assert.equal(q1, tokenName);
     });
@@ -61,6 +62,32 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         assert.equal(q1, tokenSymbol);
     });
 
+    it("Can unpause contract (Pausable)", async () => {
+        //send togglePause transaction
+        const t1 = await this.contracts[0].togglePaused({from: deployer});
+
+        //check event emitted
+        expectEvent(t1, 'Unpaused', {
+            account: deployer
+        });
+
+        //query state
+        const q1 = await this.contracts[0].paused();
+
+        //check queries
+        assert.equal(q1, false);
+    });
+
+    it("Can set mint price", async () => {
+        //send setMintPrice transaction
+        const t1 = await this.contracts[0].setMintPrice(mintPrice, {from: deployer});
+
+        //query new base URI
+        const q1 = await this.contracts[0].mintPrice();
+
+        //check query
+        assert.equal(q1, mintPrice);
+    });
 
     it("Can mint token", async () => {
         //query pre state
@@ -72,13 +99,13 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         const buyerPreBal = await buyerTracker.get();
 
         //send mint transaction
-        const t1 = await this.contracts[0].mint({from: userA, value: basePrice});
+        const t1 = await this.contracts[0].mint({from: userA, value: mintPrice});
 
         //check event emitted
         expectEvent(t1, 'Transfer', {
             from: constants.ZERO_ADDRESS,
             to: userA,
-            tokenId: "1"
+            tokenId: "0"
         });
 
         //query post state
@@ -87,21 +114,21 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         // const { delta, fees } = await buyerTracker.deltaWithFees();
 
         //check queries
-        assert.equal(q1.toNumber(), 2);
-        assert.equal(ownerDelta, basePrice);
+        assert.equal(q1.toNumber(), 1);
+        assert.equal(ownerDelta, mintPrice);
         // assert.equal(delta, basePrice + fees);
     });
 
     it("Can reject invalid minting", async () => {
         //attempt to mint with insufficient funds
         await expectRevert(
-            this.contracts[0].mint({from: userA, value: `${0.1*1e18}`}),
+            this.contracts[0].mint({from: userA, value: `${0.09*1e18}`}),
             "Must send exact value to mint",
         );
 
         //attempt to mint with overpaying funds
         await expectRevert(
-            this.contracts[0].mint({from: userA, value: `${1.1*1e18}`}),
+            this.contracts[0].mint({from: userA, value: `${50*1e18}`}),
             "Must send exact value to mint",
         );
 
@@ -121,7 +148,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
     it("Can get balance of address (IERC721)", async () => {
         //query contract
         const q1 = await this.contracts[0].balanceOf(userA);
-
         //check query
         assert.equal(q1.toNumber(), 2);
     });
@@ -132,17 +158,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
 
         //check query
         assert.equal(q1, userA);
-    });
-
-    it("Can set mint price", async () => {
-        //send setMintPrice transaction
-        const t1 = await this.contracts[0].setMintPrice(mintPrice, {from: deployer});
-
-        //query new base URI
-        const q1 = await this.contracts[0].mintPrice();
-
-        //check query
-        assert.equal(q1, mintPrice);
     });
 
     it("Can set base URI", async () => {
@@ -278,14 +293,6 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         assert.equal(q5, constants.ZERO_ADDRESS);
     });
 
-    it("Can reject invalid pause (Pausable)", async () => {
-        //attempt to pause not as owner
-        await expectRevert(
-            this.contracts[0].togglePaused({from: userA}),
-            "Ownable: caller is not the owner",
-        );
-    });
-
     it("Can pause contract (Pausable)", async () => {
         //send togglePause transaction
         const t1 = await this.contracts[0].togglePaused({from: deployer});
@@ -302,28 +309,20 @@ contract("FlatPriceERC721 Contract Tests", async accounts => {
         assert.equal(q1, true);
     });
 
+    it("Can reject invalid pause (Pausable)", async () => {
+        //attempt to pause not as owner
+        await expectRevert(
+            this.contracts[0].togglePaused({from: userA}),
+            "Ownable: caller is not the owner",
+        );
+    });
+
     it("Can reject invalid transactions while paused (Pausable)", async () => {
         //attempt to mint while paused
         await expectRevert(
             this.contracts[0].mint({from: userA, value: `${1.1*1e18}`}),
             "Pausable: paused",
         );
-    });
-
-    it("Can unpause contract (Pausable)", async () => {
-        //send togglePause transaction
-        const t1 = await this.contracts[0].togglePaused({from: deployer});
-
-        //check event emitted
-        expectEvent(t1, 'Unpaused', {
-            account: deployer
-        });
-
-        //query state
-        const q1 = await this.contracts[0].paused();
-
-        //check queries
-        assert.equal(q1, false);
     });
 
 });
