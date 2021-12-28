@@ -9,7 +9,7 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
     const tokenName = "Flat Tokens";
     const tokenSymbol = "FLAT";
     const baseURI = "https://some.public.api/endpoint/";
-    const maxSupply = 10;
+    const maxSupply = 2;
 
     let mintPrice = `${0.1*1e18}`;
 
@@ -138,6 +138,12 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         await expectRevert(
             this.contracts[0].mint({from: userA, value: `${50*1e18}`}),
             "Must send exact value to mint",
+        );
+
+        //attempt to mint over max supply
+        await expectRevert(
+            this.contracts[0].mint({from: userC, value: mintPrice}),
+            "Max supply has been reached, no more mints are possible",
         );
     });
 
