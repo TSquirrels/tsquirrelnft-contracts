@@ -131,25 +131,15 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
             this.contracts[0].mint({from: userA, value: `${50*1e18}`}),
             "Must send exact value to mint",
         );
-
-        //attempt to mint existing token
-        // await expectRevert(
-        //     this.contracts[0].mint(userA, 0, {from: deployer, value: basePrice}),
-        //     "ERC721: token already minted",
-        // );
-
-        //attempt to mint to zero address
-        // await expectRevert(
-        //     this.contracts[0].mint(constants.ZERO_ADDRESS, 1, {from: deployer, value: basePrice}),
-        //     "ERC721: mint to the zero address",
-        // );
     });
 
     it("Can get balance of address (IERC721)", async () => {
         //query contract
         const q1 = await this.contracts[0].balanceOf(userA);
+        const q2 = await this.contracts[0].balanceOf(userC);
         //check query
-        assert.equal(q1.toNumber(), 2);
+        assert.equal(q1.toNumber(), 1);
+        assert.equal(q2.toNumber(), 0);
     });
 
     it("Can get owner of token id (IERC721)", async () => {
@@ -197,7 +187,7 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         const q4 = await this.contracts[0].getApproved(0);
 
         //check queries
-        assert.equal(q1.toNumber(), 1);
+        assert.equal(q1.toNumber(), 0);
         assert.equal(q2.toNumber(), 1);
         assert.equal(q3, userB);
         assert.equal(q4, constants.ZERO_ADDRESS);
@@ -234,14 +224,12 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         });
 
         //query state
-        const q1 = await this.contracts[0].balanceOf(userA);
         const q2 = await this.contracts[0].balanceOf(userB);
         const q3 = await this.contracts[0].balanceOf(userC);
         const q4 = await this.contracts[0].ownerOf(0);
         const q5 = await this.contracts[0].getApproved(0);
 
         //check queries
-        assert.equal(q1.toNumber(), 1);
         assert.equal(q2.toNumber(), 0);
         assert.equal(q3.toNumber(), 1);
         assert.equal(q4, userC);
@@ -279,14 +267,12 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         });
 
         //query state
-        const q1 = await this.contracts[0].balanceOf(userA);
         const q2 = await this.contracts[0].balanceOf(userB);
         const q3 = await this.contracts[0].balanceOf(userC);
         const q4 = await this.contracts[0].ownerOf(0);
         const q5 = await this.contracts[0].getApproved(0);
 
         //check queries
-        assert.equal(q1.toNumber(), 1);
         assert.equal(q2.toNumber(), 1);
         assert.equal(q3.toNumber(), 0);
         assert.equal(q4, userB);
