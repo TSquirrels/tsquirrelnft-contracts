@@ -4,7 +4,7 @@ const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const TSquirrelNFT = artifacts.require("TSquirrelNFT");
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 
-contract("TSquirrelNFT Contract Tests", async accounts => {
+contract("TSquirrelNFT Crash Test Contract", async accounts => {
     const [deployer, userA, userB, userC] = accounts;
     const tokenName = "Flat Tokens";
     const tokenSymbol = "FLAT";
