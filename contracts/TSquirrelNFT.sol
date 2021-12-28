@@ -44,7 +44,7 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
     function mint() public payable whenNotPaused {
         //validate
         require(msg.value == mintPrice, "Must send exact value to mint");
-        require(ERC721EnumerableUpgradeable.totalSupply() < (maxSupply + 1), "Max supply has been reached, no more mints are possible");
+        require(ERC721EnumerableUpgradeable.totalSupply() < maxSupply, "Max supply has been reached, no more mints are possible");
         require(msg.sender != address(0x0), "ERC721: mint to the zero address");
 
         //send eth to owner address
