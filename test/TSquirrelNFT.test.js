@@ -117,7 +117,7 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         });
 
         //query post state
-        const q1 = await this.contracts[0].mintCount();
+        const q1 = await this.contracts[0].totalSupply();
         const ownerDelta = await ownerTracker.delta();
         // const { delta, fees } = await buyerTracker.deltaWithFees();
 
