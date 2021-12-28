@@ -4,8 +4,8 @@ const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const TSquirrelNFT = artifacts.require("TSquirrelNFT");
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 
-contract("TSquirrelNFT Crash Test Contract", async accounts => {
-    const [deployer, userA, userB, userC] = accounts;
+contract("TSquirrelNFT Contract Tests", async accounts => {
+    const [deployer, userA, userB, userC, userD] = accounts;
     const tokenName = "Flat Tokens";
     const tokenSymbol = "FLAT";
     const baseURI = "https://some.public.api/endpoint/";
@@ -100,6 +100,7 @@ contract("TSquirrelNFT Crash Test Contract", async accounts => {
 
         //send mint transaction
         const t1 = await this.contracts[0].mint({from: userA, value: mintPrice});
+        const t2 = await this.contracts[0].mint({from: userD, value: mintPrice});
 
         //check event emitted
         expectEvent(t1, 'Transfer', {
@@ -108,14 +109,21 @@ contract("TSquirrelNFT Crash Test Contract", async accounts => {
             tokenId: "0"
         });
 
+        //check event emitted
+        expectEvent(t2, 'Transfer', {
+            from: constants.ZERO_ADDRESS,
+            to: userD,
+            tokenId: "1"
+        });
+
         //query post state
         const q1 = await this.contracts[0].mintCount();
         const ownerDelta = await ownerTracker.delta();
         // const { delta, fees } = await buyerTracker.deltaWithFees();
 
         //check queries
-        assert.equal(q1.toNumber(), 1);
-        assert.equal(ownerDelta, mintPrice);
+        assert.equal(q1.toNumber(), 2);
+        assert.equal(ownerDelta, mintPrice * 2);
         // assert.equal(delta, basePrice + fees);
     });
 
@@ -148,6 +156,13 @@ contract("TSquirrelNFT Crash Test Contract", async accounts => {
 
         //check query
         assert.equal(q1, userA);
+    });
+
+    it("Can get token of owner by index (IERC721Enumerable)", async () => {
+        //query contract
+        const q1 = await this.contracts[0].tokenOfOwnerByIndex(userD, 0);
+        //check query
+        assert.equal(q1.toNumber(), 1);
     });
 
     it("Can set base URI", async () => {
