@@ -7,14 +7,13 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 
 contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721EnumerableUpgradeable {
 
-    uint256 public mintCount;
     uint256 public maxSupply;
     uint256 public mintPrice; // 30 TLOS
     string public baseURI;
 
     /// @dev reverts if any tokens have been minted
     modifier onlyPreMint() {
-        require(mintCount == 0, "Must be before first mint");
+        require(ERC721EnumerableUpgradeable.totalSupply() == 0, "Must be before first mint");
         _;
     }
 
@@ -45,13 +44,14 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
     function mint() public payable whenNotPaused {
         //validate
         require(msg.value == mintPrice, "Must send exact value to mint");
-        require(mintCount < maxSupply, "Max supply has been reached, no more mints are possible");
+        require(ERC721EnumerableUpgradeable.totalSupply() < maxSupply, "Max supply has been reached, no more mints are possible");
+        require(msg.sender != address(0x0), "ERC721: mint to the zero address");
 
         //send eth to owner address
         (bool sent, bytes memory data) = owner().call{value: msg.value}("");
         require(sent, "Failed to send to owner address");
 
-        _safeMint(msg.sender, mintCount);   
+        _safeMint(msg.sender, ERC721EnumerableUpgradeable.totalSupply());
     }
 
     /// @dev sets a new mintPrice value
@@ -70,19 +70,6 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
     /// @return baseURI string
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
-    }
-
-    /// @dev overridden ERC721Enumerable function hook that is called before every token transfer, including
-    /// minting and burning events.
-    /// @param from address token is moving from
-    /// @param to address token is moving to
-    /// @param tokenId id of token being moved
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
-        //if minting
-        if (from == address(0x0)) {
-            mintCount += 1;
-        }
-        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     /// @dev overridden ERC721, ERC721Enumerable function
