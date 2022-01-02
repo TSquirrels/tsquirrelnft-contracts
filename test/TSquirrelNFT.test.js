@@ -214,6 +214,14 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
         assert.equal(q4, constants.ZERO_ADDRESS);
     });
 
+
+    it("Can reject invalid transfer token (IERC721)", async () => {
+        await expectRevert(
+            this.contracts[0].transferFrom(userD, userA, 1, {from: userA}),
+            "ERC721: transfer caller is not owner nor approved"
+        );
+    });
+
     it("Can approve an address (IERC721)", async () => {
         //send approve transaction
         const t1 = await this.contracts[0].approve(userA, 0, {from: userB});
