@@ -3,19 +3,14 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 
-contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721EnumerableUpgradeable {
+contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, PausableUpgradeable {
 
     uint256 public maxSupply;
     uint256 public mintPrice; // 30 TLOS
     string public baseURI;
-
-    /// @dev reverts if any tokens have been minted
-    modifier onlyPreMint() {
-        require(ERC721EnumerableUpgradeable.totalSupply() == 0, "Must be before first mint");
-        _;
-    }
 
     /// @dev constructor replacement for proxy call
     /// @param name_ new name of token
@@ -45,7 +40,6 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
         //validate
         require(msg.value == mintPrice, "Must send exact value to mint");
         require(ERC721EnumerableUpgradeable.totalSupply() < maxSupply, "Max supply has been reached, no more mints are possible");
-        require(msg.sender != address(0x0), "ERC721: mint to the zero address");
 
         //send eth to owner address
         (bool sent, bytes memory data) = owner().call{value: msg.value}("");
@@ -58,6 +52,13 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
     /// @param newMintPrice value of new mintPrice
     function setMintPrice(uint256 newMintPrice) public onlyOwner {
         mintPrice = newMintPrice;
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
+        internal
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+    {
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     /// @dev sets a new baseURI for contract
@@ -73,13 +74,7 @@ contract TSquirrelNFT is OwnableUpgradeable, PausableUpgradeable, ERC721Enumerab
     }
 
     /// @dev overridden ERC721, ERC721Enumerable function
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, ERC721EnumerableUpgradeable) returns (bool) {
        return super.supportsInterface(interfaceId);
     }
-
-    /// @dev function to receive Ether. msg.data must be empty
-    // receive() external payable {}
-
-    /// @dev fallback function is called when msg.data is not empty
-    // fallback() external payable {}
 }
