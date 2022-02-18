@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 
 contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, OwnableUpgradeable {
-
+ 
     uint256 public maxSupply;
     uint256 public mintPrice; // 30 TLOS
     string public baseURI;
@@ -39,6 +39,13 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
          function pause() public onlyOwner {
              _pause();
          }
+
+        /// @dev sets a new maxSupply for contract
+        /// @param newMaxSupply new maxSupply to set
+        function setMaxSupply(string memory newMaxSupply) external onlyOwner {
+            require(newMaxSupply >= ERC721EnumerableUpgradeable.totalSupply(), "Must set max supply higher than current total supply");
+            maxSupply = newMaxSupply;
+        }
 
         /// @dev sets a new baseURI for contract
         /// @param newBaseURI new baseURI to set
