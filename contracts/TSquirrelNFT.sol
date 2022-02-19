@@ -11,11 +11,11 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 
 contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, OwnableUpgradeable {
- 
+
     uint256 public maxSupply;
     uint256 public mintPrice; // 30 TLOS
     string public baseURI;
-    string[] public tokenURIList;
+    string public baseFolder;
 
      using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -31,6 +31,9 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
             __Pausable_init();
             __Ownable_init();
             tokenURIList = tokenURIList_;
+            for (uint i; i < tokenURIList_.length; i++) {
+                _tokenURIs[i] = tokenURIList_[i];
+            }
             maxSupply = maxSupply_;
             mintPrice = mintPrice_;
             _pause();
@@ -45,6 +48,12 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
         function setMaxSupply(string memory newMaxSupply) external onlyOwner {
             require(newMaxSupply >= ERC721EnumerableUpgradeable.totalSupply(), "Must set max supply higher than current total supply");
             maxSupply = newMaxSupply;
+        }
+
+        /// @dev sets a new baseFolder for contract
+        /// @param newBaseFolder new baseFolder to set
+        function setBaseFolder(string memory newBaseFolder) external onlyOwner {
+            baseFolder = newBaseFolder;
         }
 
         /// @dev sets a new baseURI for contract
@@ -107,6 +116,12 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
              super._burn(tokenId);
          }
 
+        /// @dev adds a new tokenURI for contract
+        /// @param newTokenURI new tokenURI to set
+        function setTokenURI(uint256 tokenId, string memory newTokenURI) external onlyOwner {
+             requires(tokenId < maxSupply, "Token ID cannot exceed max supply");
+             _tokenURIs[tokenId] = newTokenURI
+        }
 
         /// @dev tokens that have a set URI should load it from the list
         /// @param tokenId the token id we want the URI for
@@ -116,10 +131,12 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
              override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
              returns (string memory)
          {
-             if(tokenURIList.length >= tokenId){
-                return string(abi.encodePacked(_baseURI(), tokenURIList[tokenId]));
+             requires(_exists(tokenId), "Token does not exist");
+             string memory _tokenURI = _tokenURIs[tokenId];
+             if(bytes(_tokenURI).length > 0){
+                return string(abi.encodePacked(_baseURI(), _tokenURI));
              }
-             return super.tokenURI(tokenId);
+             return string(abi.encodePacked(_baseURI(), baseFolder, tokenId, '.json');
          }
 
          function supportsInterface(bytes4 interfaceId)
