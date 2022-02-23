@@ -6,9 +6,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 
 contract("TSquirrelNFT Contract Tests", async accounts => {
     const [deployer, userA, userB, userC, userD] = accounts;
-    const tokenName = "Flat Tokens";
-    const tokenSymbol = "FLAT";
-    const baseURI = "https://some.public.api/endpoint/";
+    const baseURI = "https://api.dstor.cloud/ipfs/";
     const maxSupply = 2;
 
     let mintPrice = `${0.1*1e18}`;
@@ -19,7 +17,7 @@ contract("TSquirrelNFT Contract Tests", async accounts => {
     });
     it("Can deploy contract", async () => {
         //deploy contract
-        this.contracts[0] = await deployProxy(TSquirrelNFT, [tokenName, tokenSymbol, `${25*1e18}`, maxSupply]);
+        this.contracts[0] = await deployProxy(TSquirrelNFT, ['TSquirrelNFT', 'TSQRLNFT', `${25*1e18}`, maxSupply]);
     });
 
     it("Can get max supply", async () => {
