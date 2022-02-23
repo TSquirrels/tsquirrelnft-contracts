@@ -10,12 +10,15 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 
-contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, OwnableUpgradeable {
+contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpgradeable {
 
     uint256 public maxSupply;
-    uint256 public mintPrice; // 30 TLOS
+    uint256 public mintPrice;
     string public baseURI;
     string public baseFolder;
+
+    // Optional mapping for token URIs
+    mapping(uint256 => string) private _tokenURIs;
 
      using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -27,10 +30,8 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
     function initialize(string memory name_, string memory symbol_, uint256 mintPrice_, uint256 maxSupply_, string[] memory tokenURIList_) initializer public {
             __ERC721_init(name_, symbol_);
             __ERC721Enumerable_init();
-            __ERC721URIStorage_init();
             __Pausable_init();
             __Ownable_init();
-            tokenURIList = tokenURIList_;
             for (uint i; i < tokenURIList_.length; i++) {
                 _tokenURIs[i] = tokenURIList_[i];
             }
@@ -45,7 +46,7 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
 
         /// @dev sets a new maxSupply for contract
         /// @param newMaxSupply new maxSupply to set
-        function setMaxSupply(string memory newMaxSupply) external onlyOwner {
+        function setMaxSupply(uint256 newMaxSupply) external onlyOwner {
             require(newMaxSupply >= ERC721EnumerableUpgradeable.totalSupply(), "Must set max supply higher than current total supply");
             maxSupply = newMaxSupply;
         }
@@ -111,16 +112,19 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
          // The following functions are overrides required by Solidity.
          function _burn(uint256 tokenId)
              internal
-             override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+             override(ERC721Upgradeable)
          {
              super._burn(tokenId);
+             if (bytes(_tokenURIs[tokenId]).length != 0) {
+                 delete _tokenURIs[tokenId];
+             }
          }
 
         /// @dev adds a new tokenURI for contract
         /// @param newTokenURI new tokenURI to set
         function setTokenURI(uint256 tokenId, string memory newTokenURI) external onlyOwner {
-             requires(tokenId < maxSupply, "Token ID cannot exceed max supply");
-             _tokenURIs[tokenId] = newTokenURI
+             require(tokenId < maxSupply, "Token ID cannot exceed max supply");
+             _tokenURIs[tokenId] = newTokenURI;
         }
 
         /// @dev tokens that have a set URI should load it from the list
@@ -128,15 +132,15 @@ contract TSquirrelNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgra
          function tokenURI(uint256 tokenId)
              public
              view
-             override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+             override(ERC721Upgradeable)
              returns (string memory)
          {
-             requires(_exists(tokenId), "Token does not exist");
+             require(_exists(tokenId), "Token does not exist");
              string memory _tokenURI = _tokenURIs[tokenId];
              if(bytes(_tokenURI).length > 0){
                 return string(abi.encodePacked(_baseURI(), _tokenURI));
              }
-             return string(abi.encodePacked(_baseURI(), baseFolder, tokenId, '.json');
+             return string(abi.encodePacked(_baseURI(), baseFolder, tokenId, '.json'));
          }
 
          function supportsInterface(bytes4 interfaceId)
